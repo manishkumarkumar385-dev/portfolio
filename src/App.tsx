@@ -2,6 +2,7 @@ import './styles/index.css';
 import Hero from './sections/Hero';
 import Projects from './sections/Projects';
 import About from './sections/About';
+import Contact from './sections/Contact';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Hero />
         <About />
         <Projects />
+        <Contact />
       </main>
 
       <footer className="container" style={{

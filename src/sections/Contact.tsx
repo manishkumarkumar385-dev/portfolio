@@ -14,19 +14,31 @@ const Contact: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus('sending');
 
-        // Placeholder for actual AWS Lambda/API Gateway integration
-        setTimeout(() => {
-            console.log('Form submitted:', formData);
-            setStatus('success');
-            setFormData({ name: '', email: '', subject: '', message: '' });
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
 
-            // Reset status after 5 seconds
+            if (response.ok) {
+                setStatus('success');
+                setFormData({ name: '', email: '', subject: '', message: '' });
+            } else {
+                setStatus('error');
+            }
+        } catch (error) {
+            console.error('Submission error:', error);
+            setStatus('error');
+        } finally {
             setTimeout(() => setStatus('idle'), 5000);
-        }, 1500);
+        }
     };
 
     const inputStyle: React.CSSProperties = {

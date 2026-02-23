@@ -1,6 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Resend } from 'resend';
 
-export default function handler(
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export default async function handler(
     request: VercelRequest,
     response: VercelResponse
 ) {
@@ -15,12 +18,29 @@ export default function handler(
         return response.status(400).json({ error: 'Missing required fields' });
     }
 
-    // LOGIC: For now, we just log and return success. 
-    // In the next step, we can integrate a service like SendGrid or Resend to send actual emails.
-    console.log('Received message:', { name, email, subject, message });
+    try {
+        const data = await resend.emails.send({
+            from: 'Portfolio Contact <onboarding@resend.dev>',
+            to: 'manishkumarkumar385@gmail.com', // Updated to user's likely email based on GitHub
+            subject: `New Portfolio Message: ${subject || 'No Subject'}`,
+            html: `
+        <h2>New Message from your Portfolio</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message.replace(/\n/g, '<br>')}</p>
+      `,
+        });
 
-    return response.status(200).json({
-        message: 'Message received successfully!',
-        receivedData: { name, email, subject }
-    });
+        console.log('Email sent successfully:', data);
+
+        return response.status(200).json({
+            message: 'Message sent successfully!',
+            id: data.data?.id
+        });
+    } catch (error) {
+        console.error('Error sending email:', error);
+        return response.status(500).json({ error: 'Failed to send message' });
+    }
 }

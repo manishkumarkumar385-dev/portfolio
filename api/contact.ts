@@ -1,8 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export default async function handler(
     request: VercelRequest,
     response: VercelResponse
@@ -12,6 +10,17 @@ export default async function handler(
     }
 
     const { name, email, subject, message } = request.body;
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+        console.error('Missing RESEND_API_KEY environment variable');
+        return response.status(500).json({
+            error: 'Server configuration error',
+            details: 'Missing API Key in environment variables'
+        });
+    }
+
+    const resend = new Resend(apiKey);
 
     // Basic validation
     if (!name || !email || !message) {

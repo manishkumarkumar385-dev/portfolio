@@ -31,6 +31,8 @@ const Contact: React.FC = () => {
                 setStatus('success');
                 setFormData({ name: '', email: '', subject: '', message: '' });
             } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('API Error:', errorData.details || 'Unknown error');
                 setStatus('error');
             }
         } catch (error) {

@@ -1,36 +1,29 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Resend } from 'resend';
-
-export default async function handler(
-    request: VercelRequest,
-    response: VercelResponse
-) {
-    if (request.method !== 'POST') {
-        return response.status(405).json({ error: 'Method Not Allowed' });
+export default async function handler(req: any, res: any) {
+    // Simple guard for non-POST requests
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { name, email, subject, message } = request.body;
-
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-        console.error('Missing RESEND_API_KEY environment variable');
-        return response.status(500).json({
-            error: 'Server configuration error',
-            details: 'Missing API Key in environment variables'
-        });
-    }
-
-    const resend = new Resend(apiKey);
+    const { name, email, subject, message } = req.body;
 
     // Basic validation
     if (!name || !email || !message) {
-        return response.status(400).json({ error: 'Missing required fields' });
+        return res.status(400).json({ error: 'Missing required fields' });
     }
 
     try {
-        const data = await resend.emails.send({
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Missing RESEND_API_KEY' });
+        }
+
+        // Dynamic import to avoid top-level crash if module is missing during initialization
+        const { Resend } = await import('resend');
+        const resend = new Resend(apiKey);
+
+        await resend.emails.send({
             from: 'Portfolio Contact <onboarding@resend.dev>',
-            to: 'manishkumarkumar385@gmail.com', // Updated to user's likely email based on GitHub
+            to: 'manishkumarkumar385@gmail.com',
             subject: `New Portfolio Message: ${subject || 'No Subject'}`,
             html: `
         <h2>New Message from your Portfolio</h2>
@@ -42,17 +35,12 @@ export default async function handler(
       `,
         });
 
-        console.log('Email sent successfully:', data);
-
-        return response.status(200).json({
-            message: 'Message sent successfully!',
-            id: data.data?.id
-        });
+        return res.status(200).json({ message: 'Message sent successfully!' });
     } catch (error: any) {
-        console.error('Error sending email:', error);
-        return response.status(500).json({
+        console.error('API Error:', error);
+        return res.status(500).json({
             error: 'Failed to send message',
-            details: error.message || 'Unknown error'
+            details: error.message || 'Unknown runtime error'
         });
     }
 }

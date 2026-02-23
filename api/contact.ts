@@ -39,8 +39,11 @@ export default async function handler(
             message: 'Message sent successfully!',
             id: data.data?.id
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error sending email:', error);
-        return response.status(500).json({ error: 'Failed to send message' });
+        return response.status(500).json({
+            error: 'Failed to send message',
+            details: error.message || 'Unknown error'
+        });
     }
 }
